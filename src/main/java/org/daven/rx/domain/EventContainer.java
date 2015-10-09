@@ -11,7 +11,8 @@ public class EventContainer {
 
     private Message message;
 
-    public void setMessage(Message message) {
+    public EventContainer setMessage(Message message) {
         this.message = message;
+        return this;
     }
 }
