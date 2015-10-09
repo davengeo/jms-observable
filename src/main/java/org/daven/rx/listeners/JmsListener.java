@@ -8,9 +8,11 @@ package org.daven.rx.listeners;
 import org.daven.rx.domain.EventContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.annotation.JmsListenerConfigurer;
+import org.springframework.jms.config.JmsListenerContainerFactory;
 import org.springframework.jms.config.JmsListenerEndpointRegistrar;
 import org.springframework.jms.config.SimpleJmsListenerEndpoint;
 import rx.Observable;
@@ -19,6 +21,7 @@ import rx.schedulers.Schedulers;
 
 import javax.jms.JMSException;
 import javax.jms.MessageListener;
+import javax.jms.TextMessage;
 
 import static rx.Observable.create;
 
@@ -29,6 +32,10 @@ public class JmsListener implements JmsListenerConfigurer {
     private final static Logger LOG = LoggerFactory.getLogger(JmsListener.class);
     private final SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
 
+    @SuppressWarnings("SpringJavaAutowiringInspection")
+    @Autowired
+    JmsListenerContainerFactory jmsListenerContainerFactory;
+
     public Observable<EventContainer> jmsStream() {
         return create((Subscriber<? super EventContainer> observer) -> {
             MessageListener listener = message -> {
@@ -36,7 +43,7 @@ public class JmsListener implements JmsListenerConfigurer {
                 try {
                     EventContainer event = new EventContainer().
                             setMessageId(message.getJMSMessageID()).
-                            setMessage(message);
+                            setBody(((TextMessage) message).getText());
                     observer.onNext(event);
                 } catch (JMSException e) {
                     observer.onError(e);
