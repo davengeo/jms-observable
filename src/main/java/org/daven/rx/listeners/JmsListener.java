@@ -19,13 +19,12 @@ import javax.jms.MessageListener;
 
 @Configuration
 @EnableJms
-public class AmqListener implements JmsListenerConfigurer {
+public class JmsListener implements JmsListenerConfigurer {
 
-    private final static Logger LOG = LoggerFactory.getLogger(AmqListener.class);
+    private final static Logger LOG = LoggerFactory.getLogger(JmsListener.class);
+    private final SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
 
-    public SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
-
-    public Observable<EventContainer> jmsStream(SimpleJmsListenerEndpoint listenerEndpoint) {
+    public Observable<EventContainer> jmsStream() {
         return Observable.create(observer -> {
             MessageListener listener = message -> {
                 LOG.info("received:{}", message);
@@ -35,12 +34,17 @@ public class AmqListener implements JmsListenerConfigurer {
         });
     }
 
+
+
     @Override
     public void configureJmsListeners(JmsListenerEndpointRegistrar registar) {
+        //need subscribe to active the messageListener
+        //he is so lazy :)
+        //jmsStream().subscribe();
+
         endpoint.setId("myJmsEndPoint");
         endpoint.setDestination("mailbox-destination");
         endpoint.setConcurrency("3-5");
-
         registar.registerEndpoint(endpoint);
     }
 }
