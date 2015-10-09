@@ -40,7 +40,7 @@ public class JmsListener implements JmsListenerConfigurer {
     public void configureJmsListeners(JmsListenerEndpointRegistrar registar) {
         //need subscribe to active the messageListener
         //he is so lazy :)
-        //jmsStream().subscribe();
+        //jmsStream().subscribe(); in some part of the code
 
         endpoint.setId("myJmsEndPoint");
         endpoint.setDestination("mailbox-destination");

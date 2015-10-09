@@ -24,7 +24,7 @@ public class HomerObserver {
     @PostConstruct
     private void init()  {
         listener.jmsStream().subscribe(eventContainer -> {
-            LOG.info("GOTCHA:{}", eventContainer);
+            LOG.info("GOTCHA:{}", eventContainer.getMessage());
         });
     }
 
