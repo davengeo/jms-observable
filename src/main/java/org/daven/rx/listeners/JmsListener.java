@@ -14,8 +14,13 @@ import org.springframework.jms.annotation.JmsListenerConfigurer;
 import org.springframework.jms.config.JmsListenerEndpointRegistrar;
 import org.springframework.jms.config.SimpleJmsListenerEndpoint;
 import rx.Observable;
+import rx.Subscriber;
+import rx.schedulers.Schedulers;
 
+import javax.jms.JMSException;
 import javax.jms.MessageListener;
+
+import static rx.Observable.create;
 
 @Configuration
 @EnableJms
@@ -25,23 +30,25 @@ public class JmsListener implements JmsListenerConfigurer {
     private final SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
 
     public Observable<EventContainer> jmsStream() {
-        return Observable.create(observer -> {
+        return create((Subscriber<? super EventContainer> observer) -> {
             MessageListener listener = message -> {
                 LOG.info("received:{}", message);
-                observer.onNext(new EventContainer().setMessage(message));
+                try {
+                    EventContainer event = new EventContainer().
+                            setMessageId(message.getJMSMessageID()).
+                            setMessage(message);
+                    observer.onNext(event);
+                } catch (JMSException e) {
+                    observer.onError(e);
+                }
             };
             endpoint.setMessageListener(listener);
-        });
+        }).observeOn(Schedulers.io());
     }
-
-
 
     @Override
     public void configureJmsListeners(JmsListenerEndpointRegistrar registar) {
-        //need subscribe to active the messageListener
-        //he is so lazy :)
-        //jmsStream().subscribe(); in some part of the code
-
+        jmsStream().publish();
         endpoint.setId("myJmsEndPoint");
         endpoint.setDestination("mailbox-destination");
         endpoint.setConcurrency("3-5");
