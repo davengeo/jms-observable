@@ -5,13 +5,12 @@
 
 package org.daven.rx.listeners;
 
-import org.springframework.stereotype.Component;
 import rx.Observable;
 import rx.Subscriber;
 
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-@Component
+//@Component
 public class DigesterListener {
 
     public Observable<String> digesterStream() {

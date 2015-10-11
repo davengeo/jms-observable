@@ -8,11 +8,9 @@ package org.daven.rx.listeners;
 import org.daven.rx.domain.EventContainer;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.annotation.JmsListenerConfigurer;
-import org.springframework.jms.config.JmsListenerContainerFactory;
 import org.springframework.jms.config.JmsListenerEndpointRegistrar;
 import org.springframework.jms.config.SimpleJmsListenerEndpoint;
 import rx.Observable;
@@ -21,7 +19,7 @@ import rx.schedulers.Schedulers;
 
 import javax.jms.JMSException;
 import javax.jms.MessageListener;
-import javax.jms.TextMessage;
+import java.util.concurrent.TimeUnit;
 
 import static rx.Observable.create;
 
@@ -30,27 +28,23 @@ import static rx.Observable.create;
 public class JmsListener implements JmsListenerConfigurer {
 
     private final static Logger LOG = LoggerFactory.getLogger(JmsListener.class);
-    private final SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
 
-    @SuppressWarnings("SpringJavaAutowiringInspection")
-    @Autowired
-    JmsListenerContainerFactory jmsListenerContainerFactory;
+    private final SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
 
     public Observable<EventContainer> jmsStream() {
         return create((Subscriber<? super EventContainer> observer) -> {
             MessageListener listener = message -> {
                 LOG.info("received:{}", message);
                 try {
-                    EventContainer event = new EventContainer().
-                            setMessageId(message.getJMSMessageID()).
-                            setBody(((TextMessage) message).getText());
-                    observer.onNext(event);
+                    observer.onNext(EventContainer.from(message));
                 } catch (JMSException e) {
                     observer.onError(e);
                 }
             };
             endpoint.setMessageListener(listener);
-        }).observeOn(Schedulers.io());
+        }).
+            window(10, TimeUnit.SECONDS, Schedulers.io()).
+            flatMap(x -> x);
     }
 
     @Override

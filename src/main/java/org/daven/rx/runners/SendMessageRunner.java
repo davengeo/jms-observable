@@ -28,7 +28,7 @@ public class SendMessageRunner implements CommandLineRunner{
     public void run(String... strings) throws Exception {
         IntStream.range(0, 10).forEach(i -> {
             jmsTemplate.send("mailbox-destination",
-                    session -> session.createTextMessage("ping!"));
+                    session -> session.createTextMessage(i + " ping!"));
             LOG.info("Sending a new message.");
         });
 
