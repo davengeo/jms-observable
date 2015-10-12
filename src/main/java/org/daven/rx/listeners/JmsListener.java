@@ -13,13 +13,12 @@ import org.springframework.jms.annotation.EnableJms;
 import org.springframework.jms.annotation.JmsListenerConfigurer;
 import org.springframework.jms.config.JmsListenerEndpointRegistrar;
 import org.springframework.jms.config.SimpleJmsListenerEndpoint;
-import rx.Observable;
 import rx.Subscriber;
+import rx.observables.ConnectableObservable;
 import rx.schedulers.Schedulers;
 
 import javax.jms.JMSException;
 import javax.jms.MessageListener;
-import java.util.concurrent.TimeUnit;
 
 import static rx.Observable.create;
 
@@ -29,27 +28,29 @@ public class JmsListener implements JmsListenerConfigurer {
 
     private final static Logger LOG = LoggerFactory.getLogger(JmsListener.class);
 
-    private final SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
+    private final static SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
 
-    public Observable<EventContainer> jmsStream() {
-        return create((Subscriber<? super EventContainer> observer) -> {
-            MessageListener listener = message -> {
-                LOG.info("received:{}", message);
-                try {
-                    observer.onNext(EventContainer.from(message));
-                } catch (JMSException e) {
-                    observer.onError(e);
-                }
-            };
-            endpoint.setMessageListener(listener);
-        }).
-            window(10, TimeUnit.SECONDS, Schedulers.io()).
-            flatMap(x -> x);
+    private final static ConnectableObservable<EventContainer> jmsStream = create((Subscriber<? super EventContainer> observer) -> {
+        MessageListener listener = message -> {
+            LOG.debug("received:{}", message);
+            try {
+                observer.onNext(EventContainer.from(message));
+            } catch (JMSException e) {
+                LOG.error("Caught:{}", e);
+                observer.onError(e);
+            }
+        };
+        endpoint.setMessageListener(listener);
+    }).subscribeOn(Schedulers.io()).publish();
+
+
+    public ConnectableObservable<EventContainer> jmsStream() {
+        return jmsStream;
     }
 
     @Override
     public void configureJmsListeners(JmsListenerEndpointRegistrar registar) {
-        jmsStream().publish();
+        jmsStream().connect();
         endpoint.setId("myJmsEndPoint");
         endpoint.setDestination("mailbox-destination");
         endpoint.setConcurrency("3-5");

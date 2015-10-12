@@ -1,5 +1,7 @@
 package org.daven.rx.controllers;
 
+import org.daven.rx.domain.EventContainer;
+import org.daven.rx.listeners.JmsListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,7 +17,6 @@ import rx.schedulers.Schedulers;
 public class DeferredController {
 
     private final static Logger LOG = LoggerFactory.getLogger(DeferredController.class);
-
 
     @RequestMapping("/get-async")
     public DeferredResult<String> getAsync() {
@@ -39,7 +40,6 @@ public class DeferredController {
         }).subscribeOn(Schedulers.io());
     }
 
-
     @Autowired
     JmsTemplate jmsTemplate;
 
@@ -48,5 +48,25 @@ public class DeferredController {
         jmsTemplate.send("mailbox-destination",
                 session -> session.createTextMessage("jajaja!"));
         return new HttpEntity<>("SENT");
+    }
+
+    @Autowired
+    JmsListener listener;
+
+    @RequestMapping("/send-receive")
+    public DeferredResult<HttpEntity<String>> sendAndreceive() {
+        jmsTemplate.send("mailbox-destination",
+                session -> session.createTextMessage("jajaja!"));
+        DeferredResult<HttpEntity<String>> deferred = new DeferredResult<>(90000);
+        final Observable<EventContainer> filtered = listener.jmsStream().
+                take(1);
+        filtered.subscribe(eventContainer -> {
+            deferred.setResult(new HttpEntity<>("SENT"));
+        }, throwable -> {
+            deferred.setErrorResult(new HttpEntity<>("ERROR"));
+        }, () -> {
+            LOG.info("completed");
+        });
+        return deferred;
     }
 }

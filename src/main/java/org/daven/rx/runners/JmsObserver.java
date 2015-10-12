@@ -10,28 +10,26 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
-import rx.Subscription;
 
 import javax.annotation.PostConstruct;
 
 @Component
-public class HomerObserver {
+public class JmsObserver {
 
-    private static final Logger LOG = LoggerFactory.getLogger(HomerObserver.class);
+    private static final Logger LOG = LoggerFactory.getLogger(JmsObserver.class);
 
     @Autowired
     JmsListener listener;
 
     @PostConstruct
     private void init()  {
-        final Subscription subscription = listener.jmsStream().subscribe(eventContainer -> {
+        listener.jmsStream().subscribe(eventContainer -> {
             LOG.info("GOTCHA:{}", eventContainer.getBody());
         }, throwable -> {
             LOG.error("Error:{}");
         }, () -> {
             LOG.warn("JMS Stream completed");
         });
-
     }
 
 }
