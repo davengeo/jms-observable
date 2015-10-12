@@ -30,20 +30,21 @@ public class JmsListener implements JmsListenerConfigurer {
 
     private final static SimpleJmsListenerEndpoint endpoint = new SimpleJmsListenerEndpoint();
 
-    private final static ConnectableObservable<EventContainer> jmsStream = create((Subscriber<? super EventContainer> observer) -> {
-        MessageListener listener = message -> {
-            LOG.debug("received:{}", message);
-            try {
-                observer.onNext(EventContainer.from(message));
-            } catch (JMSException e) {
-                LOG.error("Caught:{}", e);
-                observer.onError(e);
-            }
-        };
-        endpoint.setMessageListener(listener);
-    }).
-        subscribeOn(Schedulers.io()).
-        publish();
+    private final static ConnectableObservable<EventContainer> jmsStream =
+            create((Subscriber<? super EventContainer> observer) -> {
+                MessageListener listener = message -> {
+                    LOG.debug("received:{}", message);
+                    try {
+                        observer.onNext(EventContainer.from(message));
+                    } catch (JMSException e) {
+                        LOG.error("Caught:{}", e);
+                        observer.onError(e);
+                    }
+                };
+                endpoint.setMessageListener(listener);
+            }).
+                    subscribeOn(Schedulers.io()).
+                    publish();
 
 
     public ConnectableObservable<EventContainer> jmsStream() {
