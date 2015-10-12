@@ -41,7 +41,9 @@ public class JmsListener implements JmsListenerConfigurer {
             }
         };
         endpoint.setMessageListener(listener);
-    }).subscribeOn(Schedulers.io()).publish();
+    }).
+        subscribeOn(Schedulers.io()).
+        publish();
 
 
     public ConnectableObservable<EventContainer> jmsStream() {

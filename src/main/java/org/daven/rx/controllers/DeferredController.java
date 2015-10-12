@@ -28,7 +28,7 @@ public class DeferredController {
 
         DeferredResult<HttpEntity<String>> deferred = new DeferredResult<>(90000);
         final Observable<EventContainer> filtered = listener.jmsStream().
-                take(1);
+                takeFirst(eventContainer1 -> eventContainer1.getBody().contains("jajaja!"));
         filtered.subscribe(
                 eventContainer -> deferred.setResult(new HttpEntity<>("SENT " + eventContainer.getBody())),
                 throwable -> deferred.setErrorResult(new HttpEntity<>("ERROR")),
