@@ -32,7 +32,7 @@ public class DeferredController {
         filtered.subscribe(
                 eventContainer -> deferred.setResult(new HttpEntity<>("SENT " + eventContainer.getBody())),
                 throwable -> deferred.setErrorResult(new HttpEntity<>("ERROR")),
-                () -> LOG.info("completed"));
+                () -> LOG.debug("completed"));
         jmsTemplate.send("mailbox-destination",
                 session -> session.createTextMessage("jajaja!"));
         return deferred;
