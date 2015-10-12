@@ -43,30 +43,24 @@ public class DeferredController {
     @Autowired
     JmsTemplate jmsTemplate;
 
-    @RequestMapping("/send-jms")
-    public HttpEntity<String> sendJms() {
-        jmsTemplate.send("mailbox-destination",
-                session -> session.createTextMessage("jajaja!"));
-        return new HttpEntity<>("SENT");
-    }
-
     @Autowired
     JmsListener listener;
 
     @RequestMapping("/send-receive")
     public DeferredResult<HttpEntity<String>> sendAndreceive() {
-        jmsTemplate.send("mailbox-destination",
-                session -> session.createTextMessage("jajaja!"));
+
         DeferredResult<HttpEntity<String>> deferred = new DeferredResult<>(90000);
         final Observable<EventContainer> filtered = listener.jmsStream().
                 take(1);
         filtered.subscribe(eventContainer -> {
-            deferred.setResult(new HttpEntity<>("SENT"));
+            deferred.setResult(new HttpEntity<>("SENT " + eventContainer.getBody()));
         }, throwable -> {
             deferred.setErrorResult(new HttpEntity<>("ERROR"));
         }, () -> {
             LOG.info("completed");
         });
+        jmsTemplate.send("mailbox-destination",
+                session -> session.createTextMessage("jajaja!"));
         return deferred;
     }
 }
