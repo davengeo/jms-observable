@@ -29,13 +29,10 @@ public class DeferredController {
         DeferredResult<HttpEntity<String>> deferred = new DeferredResult<>(90000);
         final Observable<EventContainer> filtered = listener.jmsStream().
                 take(1);
-        filtered.subscribe(eventContainer -> {
-            deferred.setResult(new HttpEntity<>("SENT " + eventContainer.getBody()));
-        }, throwable -> {
-            deferred.setErrorResult(new HttpEntity<>("ERROR"));
-        }, () -> {
-            LOG.info("completed");
-        });
+        filtered.subscribe(
+                eventContainer -> deferred.setResult(new HttpEntity<>("SENT " + eventContainer.getBody())),
+                throwable -> deferred.setErrorResult(new HttpEntity<>("ERROR")),
+                () -> LOG.info("completed"));
         jmsTemplate.send("mailbox-destination",
                 session -> session.createTextMessage("jajaja!"));
         return deferred;
