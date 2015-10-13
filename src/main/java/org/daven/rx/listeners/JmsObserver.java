@@ -3,9 +3,8 @@
  * david.navarro.ext@proximus.com, me@davengeo.com
  */
 
-package org.daven.rx.runners;
+package org.daven.rx.listeners;
 
-import org.daven.rx.listeners.JmsListener;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
