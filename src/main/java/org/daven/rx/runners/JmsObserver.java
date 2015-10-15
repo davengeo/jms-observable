@@ -23,13 +23,9 @@ public class JmsObserver {
 
     @PostConstruct
     private void init()  {
-        listener.jmsStream().subscribe(eventContainer -> {
-            LOG.info("GOTCHA:{}", eventContainer.getBody());
-        }, throwable -> {
-            LOG.error("Error:{}");
-        }, () -> {
-            LOG.warn("JMS Stream completed");
-        });
+        listener.jmsStream().subscribe(
+                eventContainer -> LOG.info("Observed:{}", eventContainer.getBody()),
+                throwable -> LOG.error("Error:{}", throwable),
+                () -> LOG.warn("JMS Stream completed"));
     }
-
 }
